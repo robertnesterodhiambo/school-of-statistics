@@ -1,30 +1,107 @@
----
-title: "Untitled"
-output: github_document
----
+# Packages
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+package <- c("readxl","tidyverse","ggplot2","dplyr")
+lapply(package, library, character.only = TRUE)
+#lapply(package, install.packages, character.only = TRUE) # uncomment this to hellp in installtion oacpackages in one swoop
 ```
 
-## GitHub Documents
 
-This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
+# Data importation
 
-## Including Code
-
-You can include R code in the document as follows:
-
-```{r cars}
-summary(cars)
+```{r}
+coffee <- read_excel("~/Data/coffee_shop_survey.xlsx")
+head(coffee)
+summary(coffee)
 ```
 
-## Including Plots
+# 📊 Descriptive Analysis Questions
 
-You can also embed plots, for example:
+## What is the average age of customers visiting the coffee shop?
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+mean(coffee$Age)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+## What is the gender distribution among respondents?
+
+```{r}
+table(coffee$Gender)
+```
+
+
+## What are the most and least popular products?
+
+```{r}
+coffee %>%
+  group_by(Favorite_Product) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+```
+
+
+# 📈 Relationship & Comparison Questions
+
+## Does visit frequency differ by gender or age group?
+
+```{r}
+coffee %>%
+  group_by(Gender) %>%
+  summarise(visit_mean = mean(Visit_Frequency),
+            count = n())
+
+ggplot(coffee, aes(x = Age, y = Visit_Frequency, fill = Gender)) +
+  geom_boxplot() +
+  labs(title = "Visit Frequency by Age Group and Gender")
+```
+
+## Is there a relationship between visit frequency and satisfaction score?
+
+```{r}
+coffee %>%
+  select(Satisfaction_Score,Visit_Frequency) %>%
+  group_by(Satisfaction_Score) %>%
+  summarise(count = n(),visit_mean = mean(Visit_Frequency))
+
+```
+
+## Do loyalty members spend more time at the coffee shop than non-members?
+
+```{r}
+colnames(coffee)
+coffee %>%
+  group_by(Loyalty_Member) %>%
+  summarise(count = n(), meantime = mean(`Time_Spent (min)`))
+```
+
+
+## Are customers who would recommend the coffee shop more likely to be loyal members?
+
+```{r}
+colnames(coffee)
+coffee %>%
+  group_by(Loyalty_Member,Would_Recommend) %>%
+  count(Loyalty_Member,Would_Recommend)
+```
+
+
+# 🧠 Insightful/Advanced Questions
+
+## What factors (age, loyalty status, product preference) are associated with higher satisfaction scores?
+
+```{r}
+model <- lm(data = coffee ,Satisfaction_Score ~ Age + Loyalty_Member + Favorite_Product)
+summary(model)
+```
+
+
+## Is there a difference in satisfaction scores between customers who prefer coffee and those who prefer pastries?
+
+Can we predict whether a customer would recommend the coffee shop based on other variables?
+
+🔁 Time-Specific (if you want to expand the dataset)
+Do visit patterns vary depending on the time of day or day of the week?
+
+Is there any seasonality in satisfaction levels?
