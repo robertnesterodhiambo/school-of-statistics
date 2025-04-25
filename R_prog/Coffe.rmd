@@ -1,11 +1,18 @@
+---
+output:
+  pdf_document: 
+    latex_engine: xelatex
+    toc: true
+    number_sections: true
+  html_document: default
+---
 # Packages
 
 ```{r}
-package <- c("readxl","tidyverse","ggplot2","dplyr")
+package <- c("readxl","tidyverse","ggplot2","dplyr","MASS")
 lapply(package, library, character.only = TRUE)
 #lapply(package, install.packages, character.only = TRUE) # uncomment this to hellp in installtion oacpackages in one swoop
 ```
-
 
 # Data importation
 
@@ -24,13 +31,11 @@ mean(coffee$Age)
 
 ```
 
-
 ## What is the gender distribution among respondents?
 
 ```{r}
 table(coffee$Gender)
 ```
-
 
 ## What are the most and least popular products?
 
@@ -41,10 +46,13 @@ coffee %>%
   arrange(desc(count))
 ```
 
+**The Most popular product is Tea and leas product is Sandwich**
 
 # 📈 Relationship & Comparison Questions
 
 ## Does visit frequency differ by gender or age group?
+
+*Yes there is an increase in visits by age group with older age groups having a ahigher median in the box plot suggesting higher visits frequencies*
 
 ```{r}
 coffee %>%
@@ -59,24 +67,24 @@ ggplot(coffee, aes(x = Age, y = Visit_Frequency, fill = Gender)) +
 
 ## Is there a relationship between visit frequency and satisfaction score?
 
+*The visit frequency returns a P-value less than 0.05, from this we fail to accept the null hyupothesis that there is a relationship between satisfaction score and visit frequency.*
+
 ```{r}
 coffee %>%
-  select(Satisfaction_Score,Visit_Frequency) %>%
   group_by(Satisfaction_Score) %>%
   summarise(count = n(),visit_mean = mean(Visit_Frequency))
 
-# chi square test 
+model <- aov(Visit_Frequency ~ as.factor(Satisfaction_Score), data = coffee)
+summary(model)
 
-table_data <- table(coffee$Visit_Frequency, coffee$Satisfaction_Score)
-chisq.test(table_data)
+
 ```
-
-
 
 ## Do loyalty members spend more time at the coffee shop than non-members?
 
+*From a tabulated outlook loyalty memer spend more time int shop than non-loyal members.* *From a t.test calcluation we have an extremely low pvalue but greater than 0.05 proving that there is minimal relaionship betewwen loyalty members and time spent in the shop. the high mean from tabulated data could there fore be conluded that its as a rsult of high numbers or another random factor.*
+
 ```{r}
-colnames(coffee)
 coffee %>%
   group_by(Loyalty_Member) %>%
   summarise(count = n(), meantime = mean(`Time_Spent (min)`))
@@ -85,8 +93,9 @@ t.test(`Time_Spent (min)` ~ Loyalty_Member, data = coffee)
 
 ```
 
-
 ## Are customers who would recommend the coffee shop more likely to be loyal members?
+
+*From the P-value its lesser than 0.05 hence : There is a significant association between loyalty membership and whether a customer would recommend the coffee shop.*
 
 ```{r}
 coffee %>%
@@ -100,22 +109,28 @@ cleaned_data <- coffee %>%
 # Create the contingency table
 table_data <- table(cleaned_data$Would_Recommend, cleaned_data$Loyalty_Member)
 
+# Add meaningful row and column names
+dimnames(table_data) <- list(
+  "Recommendation" = c("Would Not Recommend", "Would Recommend"),
+  "Loyalty Membership" = c("Not a Loyalty Member", "Loyalty Member")
+)
+
+head(table_data)
 # Run the chi-squared test
 chisq.test(table_data)
 
 ```
 
-
-
-
 # 🧠 Insightful/Advanced Questions
 
 ## What factors (age, loyalty status, product preference) are associated with higher satisfaction scores?
 
-```{r}
-library("MASS")
+-   *❌ No factor (Age, Loyalty Status, Product Preference) is statistically significantly associated with satisfaction score in this sample.*
+-   *However, there is a positive trend: customers who prefer Pastry, Sandwich, or Tea show higher odds of better satisfaction than those preferring Coffee.*
+-   *Loyalty Members actually have slightly lower satisfaction, but again, not significantly.*
 
-# Fit the model using polr() from the MASS package
+```{r}
+# Model fitting 
 model <- MASS::polr(as.factor(Satisfaction_Score) ~ Age + Loyalty_Member + Favorite_Product, data = coffee, Hess = TRUE)
 
 # Summary of model
@@ -123,10 +138,7 @@ summary(model)
 
 ```
 
-
 ## Is there a difference in satisfaction scores between customers who prefer coffee and those who prefer pastries?
-
-
 
 ```{r}
 unique(coffee$Favorite_Product)
@@ -137,12 +149,3 @@ t.test(Satisfaction_Score ~ Favorite_Product, data = coffee_filtered)
 
   
 ```
-
-
-
-Can we predict whether a customer would recommend the coffee shop based on other variables?
-
-🔁 Time-Specific (if you want to expand the dataset)
-Do visit patterns vary depending on the time of day or day of the week?
-
-Is there any seasonality in satisfaction levels?
