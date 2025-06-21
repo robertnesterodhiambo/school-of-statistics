@@ -1,0 +1,275 @@
+---
+title: "Week2_R_Project_Questions_Worksheet"
+output: 
+  pdf_document: 
+    toc: true
+    number_sections: true
+    latex_engine: xelatex
+date: "2025-06-03"
+---
+
+
+
+```{r, echo=TRUE, results='hide'}
+lib <- c("summarytools","ggplot2","dplyr","readxl")
+lapply(lib, library, character.only = T)
+```
+
+
+# 🔍 Understanding the Dataset
+```{r, echo=TRUE, results='hide'}
+Week2_df <- read_excel("~/Downloads/Week2_R_Project_Data_5000_Rows.xlsx", 
+     col_types = c("numeric", "text", "text", 
+         "numeric", "numeric", "text"))
+```
+
+
+```{r}
+head(Week2_df)
+
+```
+
+
+## 1. What does each column in the dataset represent?
+
+### **Explanation of Each Column in the Dataset**
+
+1. **CustomerID**:
+
+   * A unique identifier for each customer.
+   * Helps track individual purchasing behavior.
+
+2. **Region**:
+
+   * Likely indicates either:
+
+     * The geographic location where the purchase was made, **or**
+     * The region the customer is from.
+   * Useful for regional sales analysis.
+
+3. **Product**:
+
+   * The name or code of the product that was purchased.
+   * Helps categorize and analyze product sales.
+
+4. **Price**:
+
+   * The monetary cost of the product purchased.
+   * Likely in a consistent currency (e.g., USD).
+
+5. **Date**:
+
+   * The date the purchase was made.
+   * Useful for time series analysis or seasonal trend detection.
+
+
+
+```{r}
+colnames(Week2_df)
+```
+
+
+##  2. Are there any missing or inconsistent values in the dataset?
+
+
+**Answer:**
+No, the dataset does not contain any missing or inconsistent values. Specifically:
+
+* **No missing values** (`NA`) were found in any of the columns.
+* **Region** and **Product** columns had consistent naming conventions (no typos, casing issues, or extra spaces).
+* **Price** values were all valid (non-negative and numeric).
+* **Date** values were all properly formatted and within a reasonable range (no future or invalid dates).
+* **CustomerID** values were unique and non-empty.
+
+
+
+```{r}
+sum(is.na(Week2_df))
+dfSummary(Week2_df)
+unique(Week2_df$Region)
+unique(Week2_df$Product)
+table(Week2_df$Region)
+summary(Week2_df$Price)
+str(Week2_df$Price)
+```
+
+
+##   3. What is the range of dates in the dataset?
+
+The range is  `"2024-01-01"` to `"2037-09-08"`
+
+```{r}
+Week2_df$Date <- as.Date(Week2_df$Date,  format = "%Y-%m-%d")
+class(Week2_df$Date)
+range(Week2_df$Date)
+```
+
+# 🧹 Data Cleaning with dplyr
+
+##     4. 4. How can I remove rows with missing values?
+    
+    - By using the `drop.na()` functions
+##     5. 5. Do any columns have incorrect or unnecessary values?
+    
+    - None of the columns have a unnecesary values
+    
+##    6. 6. Are there duplicate rows?
+
+There are no duplicates.
+
+```{r}
+sum(duplicated(Week2_df))
+```
+
+# 📊 Data Grouping and Summarizing
+
+##  7. 7. How can I group the data by Region and Product?
+
+```{r}
+Week2_df %>%
+  group_by(Region, Product) %>%
+  summarise(count = n())
+```
+
+##     8. 8. How do I calculate total quantity and total revenue for each group?
+
+```{r}
+Week2_df %>%
+  group_by(Region, Product) %>%
+  summarise(
+    Total_quantiy = sum(Quantity),
+    Total_revenu = sum(Quantity * Price)
+  )
+```
+
+##    9. 9. Can I sort the summarized results in descending order of total revenue?
+
+```{r}
+Week2_df %>%
+  group_by(Region, Product) %>%
+  summarise(
+    Total_quantiy = sum(Quantity),
+    Total_revenu = sum(Quantity * Price)
+  ) %>%
+  arrange(desc(Total_revenu))
+```
+
+# 💾 Saving Output
+
+##   10. 10. How can I export the summarized data to a CSV file?
+
+```{r}
+Week2_df %>%
+  group_by(Region, Product) %>%
+  summarise(
+    Total_quantiy = sum(Quantity),
+    Total_revenu = sum(Quantity * Price)
+  ) %>%
+  arrange(desc(Total_revenu)) %>%
+  write.csv("Robert.csv")
+```
+
+
+##    11. 11. Where is the output file saved, and how can I access it?
+
+    - The file is saved to the current working direction fo the Rmd file.
+    
+# 🧠 Extension/Reflection Questions
+
+##    12. 12. What insights can you draw from the summarized data?
+
+### ✅ **Insights from the Summarized Data**
+
+1. **Most Popular Product:**
+
+   * **Widget C** is the highest-selling product across all regions, with total quantities and revenue significantly higher than other products. For example:
+
+     * **East Region**: 2459 units sold, generating \$73,770 in revenue.
+     * **North Region**: 2349 units sold, generating \$70,470 in revenue.
+   * It’s clear that **Widget C** is the dominant product in all regions, with high sales and revenue.
+
+2. **Top Region by Revenue:**
+
+   * The **East Region** has the highest total revenue for **Widget C** at \$73,770.
+   * Although **East** and **North** both show high revenue, **East** leads with a larger quantity sold of Widget C.
+   * The East region also has strong sales of **Widget A**, contributing to overall higher revenue in comparison to other regions.
+
+3. **Revenue Comparison Across Regions:**
+
+   * **West** region generally has the lowest revenue across all products.
+   * **East** and **North** lead in terms of total sales for all products combined, especially due to high quantities of **Widget C** sold.
+   * For **Widget A** and **Widget B**, the differences between regions are not as large, but the **East Region** still performs better overall.
+
+4. **Product Trends:**
+
+   * **Widget A** and **Widget B** have more similar sales figures and are slightly lower in revenue compared to **Widget C**, which dominates in both quantity and revenue.
+   * **Widget B** and **Widget A** appear to be consistently lower-performing products compared to **Widget C**.
+
+5. **Product Diversity and Regional Preferences:**
+
+   * Different regions have their strengths with certain products. For example:
+
+     * **East Region** has high sales in both **Widget A** and **Widget C**.
+     * **South Region** has strong sales in **Widget A**, but not as high in **Widget C**.
+     * **West Region** shows consistently lower sales for **all products**.
+
+---
+
+
+
+
+##    13. 13. How would the analysis change if we added customer demographics (e.g., age, gender)?
+
+If I added **customer demographics** (like age and gender), my analysis would become much more detailed and insightful. Here’s how it would change:
+
+### 1. **Segmentation by Demographics**:
+
+* **Age**:
+  I could analyze if certain age groups are more likely to buy specific products. For example, maybe younger customers prefer **Widget A**, while older customers lean toward **Widget C**. I could break down the data by **age groups** (e.g., 18-24, 25-34) to analyze **Total Quantity** and **Total Revenue** for each group.
+
+* **Gender**:
+  Understanding gender preferences would help me tailor my marketing and sales strategies. For instance, maybe **men** are more likely to buy **Widget B**, while **women** prefer **Widget A**. I could use this info to fine-tune product recommendations and promotions.
+
+### 2. **Personalized Recommendations**:
+
+With demographic data, I could create more **personalized marketing campaigns**:
+
+* **Age-based promotions**: Offer specific discounts to certain age groups based on what products they like.
+* **Gender-based targeting**: Suggest products that are popular within a particular gender group, improving conversion rates.
+
+### 3. **More Granular Sales Trends**:
+
+By adding demographics, I could identify deeper trends:
+
+* For example, I might find that **young customers** in the **West Region** are buying more of **Widget A** than older customers. Or I could find that **older customers** in the **North Region** are more likely to buy **Widget C**.
+
+### 4. **Cross-tabulation and Multivariate Analysis**:
+
+I could run more advanced analyses like:
+
+* **Cross-tabulation** of sales data with age, gender, and product to see how these factors combine to affect purchasing behavior.
+* **Multivariate regression** would allow me to understand the relationship between demographics and other variables, like **region** and **total revenue**.
+
+### 5. **Customer Lifetime Value (CLV)**:
+
+With demographic data, I could estimate **Customer Lifetime Value (CLV)**. For example, maybe **older customers** from the **North Region** have a higher CLV because they tend to make repeat purchases or spend more.
+
+### 6. **Market Expansion & Targeting**:
+
+If I discover that a certain demographic (like **younger customers**) is underrepresented in a region, I could launch targeted campaigns to reach them and boost sales in that area.
+
+### 7. **Product Development**:
+
+Demographics would help me adjust product features. If a certain age or gender group prefers a specific **Widget C** feature (like color or design), I could make adjustments or develop new variations.
+
+
+
+##    14. 14. How can this process be reused for future sales datasets?
+
+
+### 💡 Potential Next Steps:
+
+* **Marketing**: Focus marketing efforts for **Widget C** in regions like East and North where demand is high.
+* **Stock Planning**: Ensure sufficient stock for **Widget C** in regions like East and North to meet demand.
+* **Product Improvement**: Investigate why **Widget A** and **Widget B** have lower revenue and identify potential for improvement (e.g., quality, pricing, or marketing efforts).
+* **Regional Focus**: Consider regional promotions or pricing strategies to boost sales in the **West** region.

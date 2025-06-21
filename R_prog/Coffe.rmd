@@ -17,7 +17,7 @@ lapply(package, library, character.only = TRUE)
 # Data importation
 
 ```{r}
-coffee <- read_excel("~/Data/coffee_shop_survey.xlsx")
+coffee <- read_excel("~/DATA/coffee_shop_survey.xlsx")
 head(coffee)
 summary(coffee)
 ```
